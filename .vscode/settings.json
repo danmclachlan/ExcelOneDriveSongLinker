@@ -1,0 +1,18 @@
+{
+  "cSpell.ignoreWords": [
+    "addin",
+    "jwks",
+    "luxon"
+  ],
+  "cSpell.words": [
+    "autofit",
+    "calendarview",
+    "codepaths",
+    "datetime",
+    "mailboxsettings",
+    "msal",
+    "newevent",
+    "nocheck",
+    "tsbuildinfo"
+  ]
+}
