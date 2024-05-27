@@ -188,5 +188,113 @@ graphRouter.get('/folderitemsurls',
     }
   }
 );
+// </GetFolderitemurlsSnippet>
+
+// <GetFolderChildrenSnippet>
+interface ItemDescObject {
+  Name: string;
+  Type: string;
+  ChildCount: number;
+}
+
+graphRouter.get('/folderchildren',
+  async function(req, res) {
+    const authHeader = req.headers['authorization'];
+
+    console.debug('in function for /folderchildren');
+
+    if (authHeader) {
+      try {
+        const client = await getAuthenticatedClient(authHeader);
+
+        //console.debug('after getAuthenticatedClient');
+        //console.debug(client);
+
+        const folderPath = req.query['baseFolder']?.toString();
+        
+        console.debug(`baseFolder: ${folderPath}`);
+
+        const resultArray: ItemDescObject[]  = [];
+
+        const drive: Drive = await client
+          .api('/me/drive')
+          .get();
+
+        if (drive === null) {
+          throw new Error('Could not get OneDrive root (/me/drive)');
+        }
+        //console.debug(drive);
+        
+        const basepath = '/drives/';
+        const driveItemList: DriveItem[] = [];
+        
+        const folderItem: DriveItem = await client
+          .api(basepath.concat(drive.id || '', '/root:/', folderPath || ''))
+          .get();
+
+        if (folderItem === null) {
+          throw new Error(`Could not get OneDrive folder (${folderPath})`);
+        }
+    
+        // console.debug(folderItem);
+
+        const driveItemPage: graph.PageCollection = await client
+          .api(basepath.concat(drive.id || '', '/items/', folderItem.id || '', '/children'))
+          .get();
+        
+        // Set up a PageIterator to process the events in the result
+        // and request subsequent "pages" if there are more than 25
+        // on the server
+        const callback: graph.PageIteratorCallback = (driveItem) => {
+          driveItemList.push(driveItem);
+          return true;
+        };
+    
+        const iterator = new graph.PageIterator(client, driveItemPage, callback, undefined);
+        await iterator.iterate();
+
+        console.debug(`FileCount: ${driveItemList.length}`);
+    
+        for (let i = 0; i < driveItemList.length; i++) {
+
+          console.debug(`driveItemList[${i}]:`, driveItemList[i].name,'\nfolder: ', driveItemList[i].folder, '\nfile: ', driveItemList[i].file);
+
+          if (driveItemList[i].file !== undefined) {
+            // the item is a file
+            const name = driveItemList[i].name;
+
+            if (name !== null && name !== undefined) {
+              if (name.endsWith('.url')) {
+                resultArray.push({  'Name': name, 'Type': 'Shortcut', 'ChildCount': 0});
+              } else {
+                resultArray.push({  'Name': name, 'Type': 'File', 'ChildCount': 0});
+              }
+            }
+          } else if (driveItemList[i].folder !== undefined) {
+            // item is a folder
+            const name = driveItemList[i].name;
+
+            if (name !== null && name !== undefined) {
+              resultArray.push({  'Name': name, 'Type': 'Folder', 'ChildCount': 0 });
+            }
+          }
+        }
+
+        /**/
+        console.debug('resultArray: ', resultArray);
+
+        // Return the array of events
+        res.status(200).json(resultArray);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json(error);
+      }
+    } else {
+      // No auth header
+      res.status(401).end();
+    }
+  }
+);
+// </GetFolderChildrenSnippet>
 
 export default graphRouter;

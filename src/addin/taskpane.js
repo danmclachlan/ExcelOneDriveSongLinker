@@ -123,8 +123,8 @@ function showMainUi() {
     text: ' (at ActiveCell)'
   }).appendTo('.container');
 
-  // Create the input form
-  $('<form/>').on('submit', getSongLinks)
+  // Create the basefolder form
+  $('<form/>').on('submit', getSongOptions)
     .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Base Folder'
@@ -133,14 +133,23 @@ function showMainUi() {
       type: 'text',
       required: true,
       id: 'baseFolder'
-    })).append($('<label/>', {
+    })).append($('<input/>', {
+      class: 'primary-button',
+      type: 'submit',
+      id: 'populateSongs',
+      value: 'Populate Songs'
+    })).appendTo('.container');
+
+  // Create the input form
+  $('<form/>').on('submit', getSongLinks)
+    .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Song'
-    })).append($('<input/>', {
+    })).append($('<select/>', {
+      id: 'songName',
       class: 'form-input',
       type: 'text',
       required: true,
-      id: 'songName'
     })).append($('<input/>', {
       class: 'primary-button',
       type: 'submit',
@@ -148,9 +157,63 @@ function showMainUi() {
       value: 'Add Song'
     })).appendTo('.container');
 
+  
+
   $('<hr/>').appendTo('.container');
 }
 // </MainUiSnippet>
+
+// <getSongOptions>
+/**
+ *  @param {{ preventDefault: () => void; }} evt
+ */
+async function getSongOptions(evt) {
+  evt.preventDefault();
+  toggleOverlay(true);
+
+  try {
+    const apiToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+ 
+    const baseFolder = $('#baseFolder').val();
+
+    const requestUrl =
+      `${getBaseUrl()}/graph//folderchildren?baseFolder=${baseFolder}`;
+
+    const response = await fetch(requestUrl, {
+      headers: {
+        authorization: `Bearer ${apiToken}`
+      }
+    });
+
+    if (response.ok) {
+      const songList = await response.json();
+      if (songList.length > 0) {
+        $('songName').empty();
+
+        const selectElement = document.getElementById('songName');
+        songList.forEach((/** @type {{ Name: string; Type: string; ChildCount: Number | null; }} */ element) => {
+          if (element.Type === 'Folder') {
+            const option = document.createElement('option');
+            option.value = element.Name;
+            option.textContent = element.Name;
+            selectElement?.appendChild(option);
+          }
+        });
+      }
+
+      showStatus(`got ${songList.length} songs`, false);
+    } else {
+      const error = await response.json();
+      showStatus(`Error populating Song List from OneDrive: ${JSON.stringify(error)}`, true);
+    }
+    
+  } catch (err) {
+    console.log(`Error: ${JSON.stringify(err)}`);
+    showStatus(`Exception populating Song List from OneDrive: ${JSON.stringify(err)}`, true);
+  }
+
+  toggleOverlay(false);
+}
 
 // <getSongLinksSnippet>
 /**
@@ -184,11 +247,12 @@ async function getSongLinks(evt) {
       showStatus(`Error getting links from OneDrive: ${JSON.stringify(error)}`, true);
     }
 
-    toggleOverlay(false);
+    
   } catch (err) {
     console.log(`Error: ${JSON.stringify(err)}`);
     showStatus(`Exception getting links from OneDrive: ${JSON.stringify(err)}`, true);
   }
+  toggleOverlay(false);
 }
 // <!<getSongLinksSnippet>
 
