@@ -10,7 +10,8 @@ let authDialog = undefined;
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-var OfficeRuntime = OfficeRuntime || { auth: { getAccessToken: () => {throw new Error('office.js not loaded');}}};
+let OfficeRT = undefined;
+//var OfficeRuntime = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
 
 // Build a base URL from the current location
 function getBaseUrl() {
@@ -171,13 +172,23 @@ async function getSongOptions(evt) {
   evt.preventDefault();
   toggleOverlay(true);
 
+  console.log('getSongOptions ...');
+
   try {
-    const apiToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+    if (OfficeRT === undefined) {
+      console.log('getSongOptions: OfficeRT not defined');
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
+    }
+    const apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
+
+    console.log('apiToken: ', apiToken);
  
     const baseFolder = $('#baseFolder').val();
 
     const requestUrl =
-      `${getBaseUrl()}/graph//folderchildren?baseFolder=${baseFolder}`;
+      `${getBaseUrl()}/graph/folderchildren?baseFolder=${baseFolder}`;
 
     const response = await fetch(requestUrl, {
       headers: {
@@ -208,6 +219,7 @@ async function getSongOptions(evt) {
     }
     
   } catch (err) {
+    console.log('catch of getSongOptins: ', err);
     console.log(`Error: ${JSON.stringify(err)}`);
     showStatus(`Exception populating Song List from OneDrive: ${JSON.stringify(err)}`, true);
   }
@@ -224,7 +236,13 @@ async function getSongLinks(evt) {
   toggleOverlay(true);
 
   try {
-    const apiToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+    if (OfficeRT === undefined) {
+      console.log('getSongLinks: OfficeRT not defined');
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
+    }
+    const apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
  
     const baseFolder = $('#baseFolder').val();
     const songName = $('#songName').val();
@@ -309,7 +327,13 @@ Office.onReady(info => {
     $(async function() {
       let apiToken = '';
       try {
-        apiToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+        if (OfficeRT === undefined) {
+          console.log('Office.onReady: OfficeRT not defined');
+          // @ts-ignore
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
+        }
+        apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
         console.log(`API Token: ${apiToken}`);
       } catch (error) {
         console.log(`getAccessToken error: ${JSON.stringify(error)}`);
@@ -325,6 +349,9 @@ Office.onReady(info => {
       });
 
       const authStatus = await authStatusResponse.json();
+
+      console.log(`auth/status response: ${JSON.stringify(authStatus)}`);
+
       if (authStatus.status === 'consent_required') {
         showConsentUi();
       } else {
