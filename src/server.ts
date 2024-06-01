@@ -37,14 +37,10 @@ if (process.env.NODE_ENV !== 'production') {
     next();
   });
 
-  app.use(express.static(process.cwd(), { etag: false }));
   app.use(express.static(path.join(process.cwd(), 'addin'), { etag: false }));
-  app.use(express.static(path.join(process.cwd(), 'dist'), { etag: false }));
 } else {
   // In production mode, let static files be cached.
-  app.use(express.static(process.cwd()));
   app.use(express.static(path.join(process.cwd(), 'addin')));
-  app.use(express.static(path.join(process.cwd(), 'dist')));
 }
 
 
