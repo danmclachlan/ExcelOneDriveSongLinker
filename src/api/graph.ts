@@ -92,9 +92,6 @@ graphRouter.get('/folderitemsurls',
       try {
         const client = await getAuthenticatedClient(authHeader);
 
-        //console.debug('after getAuthenticatedClient');
-        //console.debug(client);
-
         const baseFolder = req.query['baseFolder']?.toString();
         const songName = req.query['songName']?.toString();
 
@@ -145,7 +142,7 @@ graphRouter.get('/folderitemsurls',
         const iterator = new graph.PageIterator(client, driveItemPage, callback, undefined);
         await iterator.iterate();
 
-        console.debug(`FileCount: ${driveItemList.length}`);
+        // console.debug(`FileCount: ${driveItemList.length}`);
     
         for (let i = 0; i < driveItemList.length; i++) {
           if (driveItemList[i].file !== null) {
@@ -173,8 +170,7 @@ graphRouter.get('/folderitemsurls',
           }
         }
         /**/
-        console.debug('resultArray: ');
-        console.debug(resultArray);
+        console.debug('resultArray: ', resultArray);
 
         // Return the array of events
         res.status(200).json(resultArray);
@@ -206,9 +202,6 @@ graphRouter.get('/folderchildren',
     if (authHeader) {
       try {
         const client = await getAuthenticatedClient(authHeader);
-
-        //console.debug('after getAuthenticatedClient');
-        //console.debug(client);
 
         const folderPath = req.query['baseFolder']?.toString();
         
@@ -253,11 +246,11 @@ graphRouter.get('/folderchildren',
         const iterator = new graph.PageIterator(client, driveItemPage, callback, undefined);
         await iterator.iterate();
 
-        console.debug(`FileCount: ${driveItemList.length}`);
+        // console.debug(`FileCount: ${driveItemList.length}`);
     
         for (let i = 0; i < driveItemList.length; i++) {
 
-          console.debug(`driveItemList[${i}]:`, driveItemList[i].name,'\nfolder: ', driveItemList[i].folder, '\nfile: ', driveItemList[i].file);
+          // console.debug(`driveItemList[${i}]:`, driveItemList[i].name,'\nfolder: ', driveItemList[i].folder, '\nfile: ', driveItemList[i].file);
 
           if (driveItemList[i].file !== undefined) {
             // the item is a file

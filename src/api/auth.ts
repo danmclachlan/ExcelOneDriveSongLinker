@@ -9,23 +9,6 @@ import * as msal from '@azure/msal-node';
 const authRouter = Router();
 
 // <TokenExchangeSnippet>
-// Initialize an MSAL confidential client
-const msalClient = new msal.ConfidentialClientApplication({
-  auth: {
-    clientId: process.env.AZURE_APP_ID || '',
-    clientSecret: process.env.AZURE_CLIENT_SECRET || ''
-  },
-  system: {
-    loggerOptions: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      loggerCallback: (level, message, _containsPii) => {
-        console.log(message);
-        return;
-      }
-    }
-  }
-});
-
 const keyClient = jwksClient({
   jwksUri: 'https://login.microsoftonline.com/common/discovery/v2.0/keys'
 });
@@ -65,11 +48,30 @@ async function validateJwt(authHeader: string): Promise<string | null> {
   });
 }
 
+let msalClient: msal.ConfidentialClientApplication | undefined;
+
 // Gets a Graph token from the API token contained in the
 // auth header
 export async function getTokenOnBehalfOf(authHeader: string): Promise<string | undefined> {
   // Validate the supplied token if present
   const token = await validateJwt(authHeader);
+  
+  // Initialize an MSAL confidential client
+  msalClient ??= new msal.ConfidentialClientApplication({
+    auth: {
+      clientId: process.env.AZURE_APP_ID || '',
+      clientSecret: process.env.AZURE_CLIENT_SECRET || ''
+    },
+    system: {
+      loggerOptions: {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        loggerCallback: (level, message, _containsPii) => {
+          console.log(message);
+          return;
+        }
+      }
+    }
+  });
 
   if (token) {
     const result = await msalClient.acquireTokenOnBehalfOf({

@@ -5,7 +5,7 @@
 'use strict';
 
 // @ts-ignore
-var authConfig = authConfig || {};
+//var authConfig = authConfig || {};
 
 // @ts-ignore
 var msal = msal || {
@@ -30,6 +30,7 @@ const msalRequest = {
  * @param {{ account: { homeId: string; }; accessToken: any; } | null} response
  */
 function handleResponse(response) {
+  console.log('in handleResponse - consent.js');
   localStorage.removeItem('msalCallbackExpected');
   if (response !== null) {
     localStorage.setItem('msalAccountId', response.account.homeId);
@@ -38,6 +39,7 @@ function handleResponse(response) {
 }
 
 Office.initialize = function () {
+  console.log('in Office.initialize for consent.js');
   if (Office.context.ui.messageParent) {
     // Let MSAL process a redirect response if that's what
     // caused this page to load.
@@ -67,4 +69,5 @@ Office.initialize = function () {
     }
   }
 };
+
 // </ConsentJsSnippet>

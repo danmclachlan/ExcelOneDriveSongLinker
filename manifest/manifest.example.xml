@@ -8,7 +8,7 @@
   <Version>1.0.0.0</Version>
   <ProviderName>McLachlan</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Excel OneDrive Song Linker"/>
+  <DisplayName DefaultValue="YOUR_DISPLAY_NAME_HERE"/>
   <Description DefaultValue="An add-in that creates Read-Only links to OneDrive files in a directory and inserts them into Excel"/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-80.png"/>
@@ -74,13 +74,13 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Get started with the Excel OneDrive Song Linker add-in!"/>
-        <bt:String id="CommandsGroup.Label" DefaultValue="Excel OneDrive Song Linker"/>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with the YOUR_DISPLAY_NAME_HERE add-in!"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="YOUR_DISPLAY_NAME_HERE"/>
         <bt:String id="TaskpaneButton.Label" DefaultValue="Load Song"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Add-in loaded succesfully. Go to the HOME tab and click the 'Load Song' button to get started."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to open the OneDrive Song Linker task pane"/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to open the YOUR_DISPLAY_NAME_HERE task pane"/>
       </bt:LongStrings>
     </Resources>
     <WebApplicationInfo>
