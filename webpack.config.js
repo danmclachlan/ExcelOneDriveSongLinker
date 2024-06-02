@@ -1,21 +1,26 @@
 /* eslint-disable no-undef */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const nodeExternals = require('webpack-node-externals');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 
-const { envLocal, envAzure } = require('./privateEnvOptions.js');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { envDefault, envLocal, envAzure } = require('./privateEnvOptions.js');
 
-module.exports = async (env, options) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+module.exports = async (env, _options) => {
   const localhost = env.app_deploy === 'localhost';
-  const dev = options.mode === 'development';
   const config = [
     {
       devtool: 'source-map',
-      /*output: {
-        clean: true,
-      },*/
+      output: {
+        path: path.resolve(__dirname, 'dist/addin'),
+      },
       entry: {
         taskpane: ['./src/addin/taskpane.js', './src/addin/taskpane.html' ],
         consent: ['./src/addin/consent.js', './src/addin/consent.html', './src/addin/config.js'],
@@ -59,25 +64,6 @@ module.exports = async (env, options) => {
               from: './src/addin/assets/*',
               to: 'assets/[name][ext][query]',
             },
-            {
-              from: 'package.json',
-              to: 'package.json',
-            },
-            {
-              from: './manifest/manifest.xml',
-              to: '[name]' + '[ext]',
-              transform(content) {
-                if (localhost) {
-                  return content;
-                } else {
-                  return content.toString()
-                    .replace(new RegExp(envLocal.ManifestGUID, 'g'), envAzure.ManifestGUID)
-                    .replace(new RegExp(envLocal.DisplayName, 'g'), envAzure.DisplayName)
-                    .replace(new RegExp(envLocal.ClientId, 'g'), envAzure.ClientId)
-                    .replace(new RegExp(envLocal.Url, 'g'), envAzure.Url);
-                }
-              },
-            },
           ],
         }),
       ],
@@ -87,9 +73,6 @@ module.exports = async (env, options) => {
       target: 'node',
       entry: {
         server: './src/server.ts',
-      },
-      output: {
-        //clean: true,
       },
       externals: [nodeExternals()],
       resolve: {
@@ -110,19 +93,52 @@ module.exports = async (env, options) => {
         new CopyWebpackPlugin({
           patterns: [
             {
-              from: '.env',
-              to: '.',
+              from: 'template.env',
+              to: '[ext]',
               transform(content) {
                 if (localhost) {
-                  return content;
+                  return content.toString()
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envLocal.ClientId)
+                    .replace(new RegExp(envDefault.SecretValue, 'g'), envLocal.SecretValue)
+                    .replace(new RegExp(envDefault.TlsCertPath, 'g'), envLocal.TlsCertPath)
+                    .replace(new RegExp(envDefault.TlsKeyPath, 'g'), envLocal.TlsKeyPath)
+                    .replace(new RegExp(envDefault.NodeEnv, 'g'), envLocal.NodeEnv)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envLocal.AppDeploy)
+                    .replace(new RegExp(envDefault.Port, 'g'), envLocal.Port);
                 } else {
                   return content.toString()
-                    .replace(new RegExp(envLocal.ClientId, 'g'), envAzure.ClientId)
-                    .replace(new RegExp(envLocal.SecretValue, 'g'), envAzure.SecretValue)
-                    .replace(new RegExp(envLocal.AppDeploy, 'g'), envAzure.AppDeploy)
-                    .replace(new RegExp(envLocal.Port, 'g'), envAzure.Port);
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId)
+                    .replace(new RegExp(envDefault.SecretValue, 'g'), envAzure.SecretValue)
+                    .replace(new RegExp(envDefault.NodeEnv, 'g'), envAzure.NodeEnv)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envLocal.AppDeploy)
+                    .replace(new RegExp(envDefault.Port, 'g'), envAzure.Port);
                 }
               }
+            },
+            {
+              from: 'package.json',
+              to: 'package.json',
+            },
+            {
+              from: './manifest/manifest.template.xml',
+              to: 'manifest.xml',
+              transform(content) {
+                if (localhost) {
+                  return content.toString()
+                    .replace(new RegExp(envDefault.ManifestGUID, 'g'), envLocal.ManifestGUID)
+                    .replace(new RegExp(envDefault.DisplayName, 'g'), envLocal.DisplayName)
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envLocal.ClientId)
+                    .replace(new RegExp(envDefault.SupportUrl, 'g'), envLocal.SupportUrl)
+                    .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url);
+                } else {
+                  return content.toString()
+                    .replace(new RegExp(envDefault.ManifestGUID, 'g'), envAzure.ManifestGUID)
+                    .replace(new RegExp(envDefault.DisplayName, 'g'), envAzure.DisplayName)
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId)
+                    .replace(new RegExp(envDefault.SupportUrl, 'g'), envAzure.SupportUrl)
+                    .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url);
+                }
+              },
             },
           ],
         }),

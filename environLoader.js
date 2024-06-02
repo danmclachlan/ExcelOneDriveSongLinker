@@ -1,8 +1,8 @@
-const { envLocal, envAzure } = require('./privateEnvOptions.js');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { envDefault, envLocal, envAzure } = require('./privateEnvOptions.js');
 
 module.exports = function(source) {
-  const logger = this.getLogger('environLoader') || console;
-
+  // @ts-ignore
   const qstr = this.query || 'not defined';
   const match = qstr.match(/app_deploy=(.*)/i);
   let deployValue = 'localhost';
@@ -10,13 +10,11 @@ module.exports = function(source) {
     deployValue = match[1].trim();
   } 
 
-  //logger.info(`platform: ${platformValue}`);
-
   if (deployValue === 'localhost' ) {
-    return source;
+    return source.toString()
+      .replace(new RegExp(envDefault.ClientId, 'g'), envLocal.ClientId);
   } else {
     return source.toString()
-      .replace(new RegExp(envLocal.ClientId, 'g'), envAzure.ClientId)
-      .replace(new RegExp(envLocal.Url, 'g'), envAzure.Url);
+      .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId);
   }
 };

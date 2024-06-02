@@ -8,10 +8,22 @@
  */
 let authDialog = undefined;
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let OfficeRT = undefined;
-//var OfficeRuntime = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
+
+/**
+ * Retrieves an access token for the Office Add-in's web application.
+ * @param {OfficeRuntime.AuthOptions} [options] - Optional authentication options.
+ * @returns {Promise<string>} - A promise that resolves with the access token.
+ */
+async function getAccessToken(options) {
+  if (OfficeRT === undefined) {
+    console.log('getAccessToken: OfficeRT not defined');
+    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
+  }
+  return await OfficeRT.auth.getAccessToken(options);
+}
 
 // Build a base URL from the current location
 function getBaseUrl() {
@@ -175,15 +187,8 @@ async function getSongOptions(evt) {
   console.log('getSongOptions ...');
 
   try {
-    if (OfficeRT === undefined) {
-      console.log('getSongOptions: OfficeRT not defined');
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
-    }
-    const apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
-
-    console.log('apiToken: ', apiToken);
+    const apiToken = await getAccessToken({ allowSignInPrompt: true });
+    console.log('getSongOptions: apiToken: ', apiToken);
  
     const baseFolder = $('#baseFolder').val();
 
@@ -236,13 +241,7 @@ async function getSongLinks(evt) {
   toggleOverlay(true);
 
   try {
-    if (OfficeRT === undefined) {
-      console.log('getSongLinks: OfficeRT not defined');
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
-    }
-    const apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
+    const apiToken = await getAccessToken({ allowSignInPrompt: true });
  
     const baseFolder = $('#baseFolder').val();
     const songName = $('#songName').val();
@@ -327,16 +326,10 @@ Office.onReady(info => {
     $(async function() {
       let apiToken = '';
       try {
-        if (OfficeRT === undefined) {
-          console.log('Office.onReady: OfficeRT not defined');
-          // @ts-ignore
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
-        }
-        apiToken = await OfficeRT.auth.getAccessToken({ allowSignInPrompt: true });
-        console.log(`API Token: ${apiToken}`);
+        apiToken = await getAccessToken({ allowSignInPrompt: true });
+        console.log('Office.onReady: API Token: ', apiToken);
       } catch (error) {
-        console.log(`getAccessToken error: ${JSON.stringify(error)}`);
+        console.log(`Office.onReady: getAccessToken error: ${JSON.stringify(error)}`);
         // Fall back to interactive login
         showConsentUi();
       }

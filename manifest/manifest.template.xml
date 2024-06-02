@@ -90,6 +90,7 @@
         <Scope>openid</Scope>
         <Scope>profile</Scope>
         <Scope>access_as_user</Scope>
+        <Scope>Files.ReadWrite.All</Scope>
       </Scopes>
     </WebApplicationInfo>
   </VersionOverrides>
