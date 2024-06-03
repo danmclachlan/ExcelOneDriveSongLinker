@@ -283,21 +283,41 @@ async function WriteUrlsToSheet(items)
   await Excel.run(async (context) => 
   {
     const cell = context.workbook.getActiveCell();
+    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    const usedRange = sheet.getUsedRangeOrNullObject();
+
     cell.load('address');
-    
+    cell.load('rowIndex');
+    cell.load('columnIndex');
+    usedRange.load('isNullObject');
+    usedRange.load('columnCount');
+
     await context.sync();
+
+    console.log('Used Range: ', usedRange);
+
+    if (!usedRange.isNullObject) {
+      // the sheet is not blank so make sure the row we are inserting
+      // into is empty starting at the ActiveCell 
+      // get the range to clear 
+      let rangeToClear = sheet.getRangeByIndexes(cell.rowIndex, cell.columnIndex + 1, 1, usedRange.columnCount - cell.columnIndex);
+
+      console.log('Range to clear: ', rangeToClear);
+      rangeToClear.clear();
+      await context.sync();
+    }
 
     //get the full address of the active cell
     var activeCellAddress = cell.address;
 
     // calculate the range needed to insert the hyperlinks
-    var range = context.workbook.worksheets.getActiveWorksheet().getRange(activeCellAddress).getResizedRange(0, items.length - 1);
+    var range = sheet.getRange(activeCellAddress).getResizedRange(0, items.length - 1);
     range.load('rowCount');
     range.load('columnCount');
     range.load('cellCount');
     await context.sync();
 
-    console.log(range);
+    console.log('Range to insert: ', range);
 
     for (var i = 0; i < items.length; i++) {
       let cell = range.getCell(0,i);

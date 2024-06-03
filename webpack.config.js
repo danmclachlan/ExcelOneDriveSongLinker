@@ -110,7 +110,7 @@ module.exports = async (env, _options) => {
                     .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId)
                     .replace(new RegExp(envDefault.SecretValue, 'g'), envAzure.SecretValue)
                     .replace(new RegExp(envDefault.NodeEnv, 'g'), envAzure.NodeEnv)
-                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envLocal.AppDeploy)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envAzure.AppDeploy)
                     .replace(new RegExp(envDefault.Port, 'g'), envAzure.Port);
                 }
               }

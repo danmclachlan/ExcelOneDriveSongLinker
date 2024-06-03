@@ -43,6 +43,10 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(express.static(path.join(process.cwd(), 'addin')));
 }
 
+// Route to make available the manifest.xml file.
+app.get('/manifest.xml', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'manifest.xml'));
+});
 
 console.debug(`dirname = ${process.cwd()}`);
 
