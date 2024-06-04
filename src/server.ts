@@ -14,7 +14,7 @@ const result = dotenv.config();
 if (result.error) {
   console.error('dotenv failed: ', result.error);
 } 
-console.log('dotenv result: ', result.parsed);
+//console.debug('dotenv result: ', result.parsed);
 
 import authRouter from './api/auth';
 import graphRouter from './api/graph';

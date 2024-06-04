@@ -17,9 +17,9 @@ let OfficeRT = undefined;
  */
 async function getAccessToken(options) {
   if (OfficeRT === undefined) {
-    console.log('getAccessToken: OfficeRT not defined');
+    console.debug('getAccessToken: OfficeRT not defined');
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-undef
     OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
   }
   return await OfficeRT.auth.getAccessToken(options);
@@ -137,7 +137,7 @@ function showMainUi() {
   }).appendTo('.container');
 
   // Create the basefolder form
-  $('<form/>').on('submit', getSongOptions)
+  $('<form/>').on('change', getSongCategories)
     .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Base Folder'
@@ -146,13 +146,20 @@ function showMainUi() {
       type: 'text',
       required: true,
       id: 'baseFolder'
-    })).append($('<input/>', {
-      class: 'primary-button',
-      type: 'submit',
-      id: 'populateSongs',
-      value: 'Populate Songs'
     })).appendTo('.container');
 
+  // Create the Song Category input form
+  $('<form/>').on('change', getSongOptions)
+    .append($('<label/>', {
+      class: 'ms-fontSize-16 ms-fontWeight-semibold',
+      text: 'Song Category'
+    })).append($('<select/>', {
+      id: 'categoryFolder',
+      class: 'form-input',
+      type: 'text',
+      required: true,
+    })).appendTo('.container');
+  
   // Create the input form
   $('<form/>').on('submit', getSongLinks)
     .append($('<label/>', {
@@ -170,13 +177,70 @@ function showMainUi() {
       value: 'Add Song'
     })).appendTo('.container');
 
-  
-
   $('<hr/>').appendTo('.container');
 }
 // </MainUiSnippet>
 
-// <getSongOptions>
+// <getSongCategoriesSnippet>
+/**
+ *  @param {{ preventDefault: () => void; }} evt
+ */
+async function getSongCategories(evt) {
+  evt.preventDefault();
+  toggleOverlay(true);
+
+  console.debug('getSongCategories ...');
+
+  try {
+    const apiToken = await getAccessToken({ allowSignInPrompt: true });
+    const baseFolder = $('#baseFolder').val();
+    const requestUrl =
+      `${getBaseUrl()}/graph/folderchildren?baseFolder=${baseFolder}`;
+
+    const response = await fetch(requestUrl, {
+      headers: {
+        authorization: `Bearer ${apiToken}`
+      }
+    });
+
+    if (response.ok) {
+      const categoryList = await response.json();
+      let categoryCount = 0;
+      if (categoryList.length > 0) {
+        $('#categoryFolder').empty();
+
+        const selectElement = document.getElementById('categoryFolder');
+        categoryList.forEach((/** @type {{ Name: string; Type: string; ChildCount: Number | null; }} */ element) => {
+          if (element.Type === 'Folder') {
+            const option = document.createElement('option');
+            option.value = element.Name;
+            option.textContent = element.Name;
+            selectElement?.appendChild(option);
+            categoryCount++;
+          }
+        });
+      }
+
+      showStatus(`got ${categoryCount} Song Categories`, false);
+      
+      // Fill in the Songs from the first category.
+      getSongOptions(evt);
+
+    } else {
+      const error = await response.json();
+      showStatus(`Error populating Song Category List from OneDrive: ${JSON.stringify(error)}`, true);
+    }
+    
+  } catch (err) {
+    console.log(`Error: ${JSON.stringify(err)}`);
+    showStatus(`Exception populating Song Category List from OneDrive: ${JSON.stringify(err)}`, true);
+  }
+
+  toggleOverlay(false);
+}
+// </getSongCategoriesSnippet>
+
+// <getSongOptionsSnippet>
 /**
  *  @param {{ preventDefault: () => void; }} evt
  */
@@ -184,13 +248,19 @@ async function getSongOptions(evt) {
   evt.preventDefault();
   toggleOverlay(true);
 
-  console.log('getSongOptions ...');
+  console.debug('getSongOptions ...');
 
   try {
     const apiToken = await getAccessToken({ allowSignInPrompt: true });
-    console.log('getSongOptions: apiToken: ', apiToken);
  
-    const baseFolder = $('#baseFolder').val();
+    let baseFolder = $('#baseFolder').val()?.toString() || '';
+    const categoryFolder = $('#categoryFolder').val()?.toString() || '';
+    //console.debug('categoryFolder: ', categoryFolder);
+
+    if (categoryFolder !== '') {
+      baseFolder = baseFolder.concat('/', categoryFolder);
+      //console.debug('updated baseFolder: ', baseFolder);
+    }
 
     const requestUrl =
       `${getBaseUrl()}/graph/folderchildren?baseFolder=${baseFolder}`;
@@ -204,13 +274,13 @@ async function getSongOptions(evt) {
     if (response.ok) {
       const songList = await response.json();
       if (songList.length > 0) {
-        $('songName').empty();
+        $('#songName').empty();
 
         const selectElement = document.getElementById('songName');
         songList.forEach((/** @type {{ Name: string; Type: string; ChildCount: Number | null; }} */ element) => {
           if (element.Type === 'Folder') {
             const option = document.createElement('option');
-            option.value = element.Name;
+            option.value = categoryFolder.concat('/', element.Name);
             option.textContent = element.Name;
             selectElement?.appendChild(option);
           }
@@ -224,13 +294,13 @@ async function getSongOptions(evt) {
     }
     
   } catch (err) {
-    console.log('catch of getSongOptins: ', err);
     console.log(`Error: ${JSON.stringify(err)}`);
     showStatus(`Exception populating Song List from OneDrive: ${JSON.stringify(err)}`, true);
   }
 
   toggleOverlay(false);
 }
+// </getSongOptionsSnippet>
 
 // <getSongLinksSnippet>
 /**
@@ -279,7 +349,7 @@ async function getSongLinks(evt) {
  */
 async function WriteUrlsToSheet(items) 
 {
-  console.log(`in WriteUrlsToSheet: items count = ${items.length}`);
+  console.debug(`in WriteUrlsToSheet: items count = ${items.length}`);
   await Excel.run(async (context) => 
   {
     const cell = context.workbook.getActiveCell();
@@ -294,15 +364,15 @@ async function WriteUrlsToSheet(items)
 
     await context.sync();
 
-    console.log('Used Range: ', usedRange);
+    //console.debug('Used Range: ', usedRange);
 
     if (!usedRange.isNullObject) {
       // the sheet is not blank so make sure the row we are inserting
       // into is empty starting at the ActiveCell 
       // get the range to clear 
-      let rangeToClear = sheet.getRangeByIndexes(cell.rowIndex, cell.columnIndex + 1, 1, usedRange.columnCount - cell.columnIndex);
+      let rangeToClear = sheet.getRangeByIndexes(cell.rowIndex, cell.columnIndex + 1, 1, usedRange.columnCount - cell.columnIndex + 1);
 
-      console.log('Range to clear: ', rangeToClear);
+      //console.debug('Range to clear: ', rangeToClear);
       rangeToClear.clear();
       await context.sync();
     }
@@ -317,7 +387,7 @@ async function WriteUrlsToSheet(items)
     range.load('cellCount');
     await context.sync();
 
-    console.log('Range to insert: ', range);
+    //console.debug('Range to insert: ', range);
 
     for (var i = 0; i < items.length; i++) {
       let cell = range.getCell(0,i);
@@ -347,9 +417,9 @@ Office.onReady(info => {
       let apiToken = '';
       try {
         apiToken = await getAccessToken({ allowSignInPrompt: true });
-        console.log('Office.onReady: API Token: ', apiToken);
+        //console.debug('Office.onReady: API Token: ', apiToken);
       } catch (error) {
-        console.log(`Office.onReady: getAccessToken error: ${JSON.stringify(error)}`);
+        console.debug(`Office.onReady: getAccessToken error: ${JSON.stringify(error)}`);
         // Fall back to interactive login
         showConsentUi();
       }
@@ -363,7 +433,7 @@ Office.onReady(info => {
 
       const authStatus = await authStatusResponse.json();
 
-      console.log(`auth/status response: ${JSON.stringify(authStatus)}`);
+      console.debug(`auth/status response: ${JSON.stringify(authStatus)}`);
 
       if (authStatus.status === 'consent_required') {
         showConsentUi();

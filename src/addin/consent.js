@@ -14,6 +14,7 @@ var msal = msal || {
 
 const msalClient = new msal.PublicClientApplication({
   auth: {
+    // eslint-disable-next-line no-undef
     clientId: authConfig.clientId
   }
 });
