@@ -1,3 +1,6 @@
+// Copyright (c) Daniel R. McLachlan.
+// Licensed under the MIT License.
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { envDefault, envLocal, envAzure } = require('./privateEnvOptions.js');
 

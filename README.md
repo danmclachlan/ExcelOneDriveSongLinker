@@ -1,20 +1,10 @@
----
-page_type: Office Add-in
-description: This add-in uses the Microsoft Graph JavaScript SDK to access OneDrive from an Excel Add-ins.
-products:
-- ms-graph
-- OneDrive
-languages:
-- typescript
-- javascript
----
-
 # Office Add-in using Microsoft Graph to add Song Links to an Excel spreadsheet
 
 ![License.](https://img.shields.io/badge/license-MIT-green.svg)
 
-This Excel Add-in uses the Microsoft Graph JavaScript SDK to access folders and files stored in **OneDrive** and insert anonymous read-only links to the selected files starting at the ActiveCell across the current row. If the file is a shortcut then it inserts a link to the target url stored in the shortcut rather than generating a link to the shortcut file.
-It assumes that there is a base folder containing as set of folders, one per song.  Each song folder contains multiple files of representing the song.  
+This code is based on the [Microsoft Graph sample Office Add-in](https://learn.microsoft.com/en-us/samples/microsoftgraph/msgraph-sample-office-addin/microsoft-graph-sample-office-add-in/) from the github repository: [msgraph-sample-office-addin](https://github.com/microsoftgraph/msgraph-sample-office-addin/tree/main/).  
+
+This Excel Add-in uses the Microsoft Graph JavaScript SDK to access folders and files stored in **OneDrive** and insert anonymous read-only links to the selected files starting at the ActiveCell across the current row. If the file is a shortcut then it inserts a link to the target url stored in the shortcut rather than generating a link to the shortcut file. It assumes that there is a base folder containing as set of category folders, and each of the category folders has a set of folders, one per song.  Each song folder contains multiple files with different representations of the song.
 
 By convention it is recommended that the directory names be of the form `[Song Name]_[key]`, and that each file in the directory be of the form `[Song Name]_[key]_[type].[ext]`. The types would include:
 
@@ -25,10 +15,29 @@ By convention it is recommended that the directory names be of the form `[Song N
 - **Individual instrument parts (_<instrument>)** - a pdf file of a particular instrument's part. For example a violin part (_violin).
 - **Shortcut to a YouTube performance of the Song (_YouTube)** - a shortcut file containing a link to a YouTube video.
 
-The Add-in has two functions. First fill in the text box with the OneDrive path to the folder containing the folders of music. Then click the **Populate Songs** button to read the folder and populate a selection list of all the folders found.
+This convention is not required as the Add-in will process all files in the folder and insert them into the spreadsheet. 
 
-Select the Cell in the Excel spreadsheet where you want to insert the song. Select the song name from the drop down list then click the **Add Song** button to perform the insertion.
+# Usage
+The Add-in has three selections. 
+- **Base Folder** - is a text box where you enter the OneDrive path from the root of your OneDrive to the folder containing the folders of categories of music.  Once this is filled in and you hit **Enter** the Add-in will automatically query OneDrive to get the list of folders in this base folder and populate the **Song Category** drop down list with all the folders contained in the **Base Folder**.  
+- **Song Category** - is a drop down list of all the folders containing songs.  Once this drop down is populated from the **Base Folder** the add-in will automatically query OneDrive and populate the **Song** drop down list with all the songs (folders) contained in the **Song Category** folder.  Each time a new **Song Category** is selected, the **Song** drop down list will be changed to have all the songs from the new category.
+- **Song** - is a drop down list of all the folders in the **Song Category** folder. 
 
+Once you have selected the **Song** you wish to add the the Excel spreadsheet.  Make sure the **ActiveCell** is pointing to the correct location in the spreadsheet, and then click **Add Song** to perform the insertion. 
+
+The following actions will be taken:
+- Query OneDrive for the list of files in the **Base Folder**/**Song Category**/**Song** folder.
+- Create a OneDrive **Read Only**-**Anonymous** sharing link to the **Song** folder if it doesn't exist, otherwise use the existing one.
+- Set the **ActiveCell** *value* property to the **Song** name, and the *hyperlink* property to a OneDrive **Read Only**-**Anonymous** sharing link to the folder. 
+- Iterate through the items in the folder.  Based on the type of item, set the values/properties of sequential cells across the current row.
+    - **shortcut (.url)** - read the value of the **shortcut**, set the *value* property of the cell to the filename, and set the *Hyperlink* property of the cell to url referenced by the **shortcut**.
+    - **file** (not a shortcut) - create a OneDrive **Read Only**-**Anonymous** sharing link to the **file** if it doesn't exist, otherwise use the existing one, set the *value* property of the cell to the **file** name, and set the *Hyperlink* property of the cell to the **Read Only**-**Anonymous** OneDrive sharing link.
+    - **folder** - skipped.
+
+    > [!IMPORTANT]
+    > OneDrive **Read Only**-**Anonymous** sharing links allow anyone with the link to be able to read the file.  They will not have access to make any changes to the file.
+
+# Instantiate the project
 ## Prerequisites
 
 To build and run this project, you need the following:
@@ -221,10 +230,6 @@ This process follows parts of the process outlined in the Microsoft Learn docume
         - `57fb890c-0dab-4253-a5e0-7188c88b2bb4` (Office on the web)
         - `08e18876-6177-487e-b8b5-cf950c1e598c` (Office on the web)
 
-
-
-
-
 1. Create a new App registration. Follow the steps outlined above in **Register a web application in the Azure portal** with the following differences:
     1. Set **Name** to `Excel OneDrive Song Linker (Azure)`.
     1. Under **Redirect URI**, set the first drop-down to `Single-page application (SPA)` and set the value to `https://<App Service app URL saved above>/consent.html`.
@@ -239,9 +244,9 @@ This process follows parts of the process outlined in the Microsoft Learn docume
 
 1. Build and deploy the code - follow the steps in [Build and deploy](https://learn.microsoft.com/en-us/office/dev/add-ins/publish/deploy-office-add-in-sso-to-azure?tabs=windows#build-and-deploy) except use the following command to build the code:
 
-        ```Shell
-        yarn build
-        ```
+    ```Shell
+    yarn build
+    ```
 
 1. In your browser, go to [Office.com](https://www.office.com/) and sign in. Select **Create** in the left-hand toolbar, then select **Workbook**.
 
@@ -250,10 +255,6 @@ This process follows parts of the process outlined in the Microsoft Learn docume
 1. Select **Upload My Add-in**, then select **Browse**. Upload your **manifest.xml** file. It will be in the `dist` folder.
 
 1. Select the **Load Song** button on the **Home** tab to open the task pane.
-
-## Code of conduct
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Disclaimer
 

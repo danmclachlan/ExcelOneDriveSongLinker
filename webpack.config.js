@@ -1,3 +1,5 @@
+// Copyright (c) Daniel R. McLachlan.
+// Licensed under the MIT License.
 /* eslint-disable no-undef */
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -148,9 +150,10 @@ module.exports = async (env, _options) => {
       devtool: 'source-map',
       entry: {
         UserHelp: './src/userdocs/UserHelp.js',
+        InstallationGuide: './src/userdocs/InstallationGuide.js',
       },
       output: {
-        filename: '[name].js', // Output as UserHelp.js
+        filename: '[name].js', // Output as a JavaScript file
         path: path.resolve(__dirname, 'dist/addin'),
       },
       module: {
@@ -185,7 +188,13 @@ module.exports = async (env, _options) => {
       plugins: [
         new HtmlWebpackPlugin({
           filename: 'UserHelp.html',   // Output filename
-          template: './src/userdocs/template.html', 
+          template: './src/userdocs/template.html',
+          chunks: ['UserHelp'],
+        }),
+        new HtmlWebpackPlugin({
+          filename: 'InstallationGuide.html',   // Output filename
+          template: './src/userdocs/template.html',
+          chunks: ['InstallationGuide'], 
         }),
       ]
     },

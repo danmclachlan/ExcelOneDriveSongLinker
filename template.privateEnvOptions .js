@@ -1,3 +1,6 @@
+// Copyright (c) Daniel R. McLachlan.
+// Licensed under the MIT License.
+
 const envDefault = {
   ManifestGUID: 'NEW_GUID_HERE',
   DisplayName:  'YOUR_DISPLAY_NAME_HERE',

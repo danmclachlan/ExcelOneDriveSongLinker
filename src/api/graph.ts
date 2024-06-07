@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation.
+// Copyright (c) Daniel R. McLachlan.
 // Licensed under the MIT License.
 
 import Router from 'express-promise-router';
