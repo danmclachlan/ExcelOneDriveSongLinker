@@ -9,7 +9,8 @@ const envDefault = {
   Url:          'localhost:3000',
   AppDeploy:    'APP_DEPLOY=\'localhost\'',
   Port:         '3000',
-  SupportUrl:   'https://www.contoso.com/help'
+  SupportUrl:   'https://www.contoso.com/help',
+  GitHubUrl:    'YOUR_GITHUB_LOCATION'
 };
 
 const envLocal = {
@@ -23,7 +24,8 @@ const envLocal = {
   Url:          'localhost:3000',
   AppDeploy:    'APP_DEPLOY=\'localhost\'',
   Port:         '3000',
-  SupportUrl:   'https://github.com/danmclachlan/ExcelOneDriveSongLinker/issues'
+  SupportUrl:   'https://localhost:3000/UserHelp.html',
+  GitHubUrl:    '<your github url including https://>'
 };
     
 const envAzure = {
@@ -37,7 +39,8 @@ const envAzure = {
   Url:          '<App Service app URL>',
   AppDeploy:    'APP_DEPLOY=\'Azure\'',
   Port:         '443',
-  SupportUrl:   'https://github.com/danmclachlan/ExcelOneDriveSongLinker/issues'
+  SupportUrl:   'https://<App Service app URL>/UserHelp.html',
+  GitHubUrl:    '<your github url including https://>'
 };
 
 exports.envDefault = envDefault;

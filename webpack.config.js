@@ -167,10 +167,12 @@ module.exports = async (env, _options) => {
                   preprocess: function(_markdownIt, source) {
                     if (localhost) {
                       return source.toString()
-                        .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url);
+                        .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url)
+                        .replace(new RegExp(envDefault.GitHubUrl, 'g'), envLocal.GitHubUrl);
                     } else {
                       return source.toString()
-                        .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url);
+                        .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url)
+                        .replace(new RegExp(envDefault.GitHubUrl, 'g'), envAzure.GitHubUrl);
                     }
                   }
                 },
