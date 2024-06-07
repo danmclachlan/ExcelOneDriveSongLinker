@@ -47,6 +47,8 @@
     "karma-chrome-launcher": "^3.2.0",
     "karma-jasmine": "^5.1.0",
     "karma-webpack": "^5.0.1",
+    "markdown-it": "^14.1.0",
+    "markdownit-loader": "^2.0.0",
     "nodemon": "^2.0.22",
     "prettier": "^3.2.5",
     "ts-loader": "^9.5.1",

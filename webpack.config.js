@@ -144,6 +144,49 @@ module.exports = async (env, _options) => {
         }),
       ],
     },
+    {
+      devtool: 'source-map',
+      entry: {
+        UserHelp: './src/userdocs/UserHelp.js',
+      },
+      output: {
+        filename: '[name].js', // Output as UserHelp.js
+        path: path.resolve(__dirname, 'dist'),
+      },
+      module: {
+        rules: [
+          { test: /\.html$/, loader: 'html-loader'},
+          {
+            test: /\.md$/,
+            use: [
+              { 
+                loader: 'markdownit-loader',
+                options: {
+                  preset: 'default',
+                  breaks: false,
+                  preprocess: function(_markdownIt, source) {
+                    if (localhost) {
+                      return source.toString()
+                        .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url);
+                    } else {
+                      return source.toString()
+                        .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url);
+                    }
+                  }
+                },
+              },
+            ],
+            type: 'asset/source',
+          },
+        ],
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          filename: 'UserHelp.html',   // Output filename
+          template: './src/userdocs/template.html', 
+        }),
+      ]
+    },
   ];
   
   return config;
