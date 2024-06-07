@@ -151,7 +151,7 @@ module.exports = async (env, _options) => {
       },
       output: {
         filename: '[name].js', // Output as UserHelp.js
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'dist/addin'),
       },
       module: {
         rules: [

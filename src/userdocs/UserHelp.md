@@ -33,6 +33,11 @@ The following actions will be taken:
     > [!IMPORTANT]
     > OneDrive **Read Only**-**Anonymous** sharing links allow anyone with the link to be able to read the file.  They will not have access to make any changes to the file.
 
+# Support
+This code is open source and the repository is on github [ExcelOneDriveSongLinker](https://github.com/danmclachlan/ExcelOneDriveSongLinker).
+
+If you encounter an issue, you can submit and [Issue](https://github.com/danmclachlan/ExcelOneDriveSongLinker/issues).
+
 # Installation
 To use the **Excel OneDrive Song Linker** add-in, you will need to use sideloading to install this Office Add-in. There are different ways to sideload this Office Add-in based on the specific platform.  The sideloading process is detailed in Microsoft documentation - [Sideload an Office Add-in for testing](https://learn.microsoft.com/en-us/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing).  Two of the common ones for Windows are detailed below.
 - **Sideload in Office on the web**

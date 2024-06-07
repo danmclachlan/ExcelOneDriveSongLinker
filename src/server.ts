@@ -48,10 +48,6 @@ app.get('/manifest.xml', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'manifest.xml'));
 });
 
-app.get('/UserHelp.html', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'UserHelp.html'));
-});
-
 console.debug(`dirname = ${process.cwd()}`);
 
 app.use('/auth', authRouter);
