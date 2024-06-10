@@ -10,7 +10,7 @@ const envDefault = {
   TlsKeyPath:   'PATH_TO_LOCALHOST.key',
   NodeEnv:      'development',
   Url:          'localhost:3000',
-  AppDeploy:    'APP_DEPLOY=\'localhost\'',
+  AppDeploy:    'DEPLOY_ENV',
   Port:         '3000',
   SupportUrl:   'https://www.contoso.com/help',
   GitHubUrl:    'YOUR_GITHUB_LOCATION'
@@ -25,7 +25,7 @@ const envLocal = {
   TlsKeyPath:   '<path to LOCALHOST.KEY>',
   NodeEnv:      'development',
   Url:          'localhost:3000',
-  AppDeploy:    'APP_DEPLOY=\'localhost\'',
+  AppDeploy:    'localhost',
   Port:         '3000',
   SupportUrl:   'https://localhost:3000/UserHelp.html',
   GitHubUrl:    '<your github url including https://>'
@@ -40,7 +40,7 @@ const envAzure = {
   TlsKeyPath:   '',
   NodeEnv:      'development',
   Url:          '<App Service app URL>',
-  AppDeploy:    'APP_DEPLOY=\'Azure\'',
+  AppDeploy:    'Azure',
   Port:         '443',
   SupportUrl:   'https://<App Service app URL>/UserHelp.html',
   GitHubUrl:    '<your github url including https://>'

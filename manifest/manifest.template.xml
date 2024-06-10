@@ -9,7 +9,7 @@
   <ProviderName>McLachlan</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="YOUR_DISPLAY_NAME_HERE"/>
-  <Description DefaultValue="An add-in that creates Read-Only links to OneDrive files in a directory and inserts them into Excel"/>
+  <Description DefaultValue="An add-in that creates Read-Only links to OneDrive files in a directory and inserts them into Excel (DEPLOY_ENV)"/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>

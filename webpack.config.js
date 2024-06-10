@@ -14,6 +14,21 @@ const path = require('path');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { envDefault, envLocal, envAzure } = require('./privateEnvOptions.js');
 
+// Function to set the output directory based on the type of deployment (localhost or azure)
+// Defaults to localhost if the app_deploy environment variable is not set.
+function deployLocation(env, extension) {
+  var base = 'dist';
+  if (env.app_deploy !== undefined) {
+    base = path.join(base, env.app_deploy);
+  } else {
+    base = path.join(base, 'localhost');
+  }
+  if (extension !== null) {
+    base = path.join(base, extension);
+  }
+  return base;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 module.exports = async (env, _options) => {
   const localhost = env.app_deploy === 'localhost';
@@ -21,7 +36,7 @@ module.exports = async (env, _options) => {
     {
       devtool: 'source-map',
       output: {
-        path: path.resolve(__dirname, 'dist/addin'),
+        path: path.resolve(__dirname, deployLocation(env, 'addin')),
       },
       entry: {
         taskpane: ['./src/addin/taskpane.js', './src/addin/taskpane.html' ],
@@ -75,6 +90,9 @@ module.exports = async (env, _options) => {
       target: 'node',
       entry: {
         server: './src/server.ts',
+      },
+      output: {
+        path: path.resolve(__dirname, deployLocation(env, null)),
       },
       externals: [nodeExternals()],
       resolve: {
@@ -131,6 +149,7 @@ module.exports = async (env, _options) => {
                     .replace(new RegExp(envDefault.DisplayName, 'g'), envLocal.DisplayName)
                     .replace(new RegExp(envDefault.ClientId, 'g'), envLocal.ClientId)
                     .replace(new RegExp(envDefault.SupportUrl, 'g'), envLocal.SupportUrl)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envLocal.AppDeploy)
                     .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url);
                 } else {
                   return content.toString()
@@ -138,6 +157,30 @@ module.exports = async (env, _options) => {
                     .replace(new RegExp(envDefault.DisplayName, 'g'), envAzure.DisplayName)
                     .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId)
                     .replace(new RegExp(envDefault.SupportUrl, 'g'), envAzure.SupportUrl)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envAzure.AppDeploy)
+                    .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url);
+                }
+              },
+            },
+            {
+              from: './manifest/manifest.template.xml',
+              to: `../ExcelOneDriveSongLinker.${env.app_deploy}.xml`,
+              transform(content) {
+                if (localhost) {
+                  return content.toString()
+                    .replace(new RegExp(envDefault.ManifestGUID, 'g'), envLocal.ManifestGUID)
+                    .replace(new RegExp(envDefault.DisplayName, 'g'), envLocal.DisplayName)
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envLocal.ClientId)
+                    .replace(new RegExp(envDefault.SupportUrl, 'g'), envLocal.SupportUrl)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envLocal.AppDeploy)
+                    .replace(new RegExp(envDefault.Url, 'g'), envLocal.Url);
+                } else {
+                  return content.toString()
+                    .replace(new RegExp(envDefault.ManifestGUID, 'g'), envAzure.ManifestGUID)
+                    .replace(new RegExp(envDefault.DisplayName, 'g'), envAzure.DisplayName)
+                    .replace(new RegExp(envDefault.ClientId, 'g'), envAzure.ClientId)
+                    .replace(new RegExp(envDefault.SupportUrl, 'g'), envAzure.SupportUrl)
+                    .replace(new RegExp(envDefault.AppDeploy, 'g'), envAzure.AppDeploy)
                     .replace(new RegExp(envDefault.Url, 'g'), envAzure.Url);
                 }
               },
@@ -154,7 +197,7 @@ module.exports = async (env, _options) => {
       },
       output: {
         filename: '[name].js', // Output as a JavaScript file
-        path: path.resolve(__dirname, 'dist/addin'),
+        path: path.resolve(__dirname, deployLocation(env, 'addin')),
       },
       module: {
         rules: [
