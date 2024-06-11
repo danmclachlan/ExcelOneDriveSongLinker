@@ -147,7 +147,7 @@ It is highly recommended to create a second **App Registration** for the deploye
 
 ## Build and run the code
 
-1. Run the following command in your CLI to build the application. The built code will be placed in the `dist` folder.
+1. Run the following command in your CLI to build the application. The built code will be placed in the `dist/localhost` folder.
 
     ```Shell
     yarn build:devpack
@@ -162,7 +162,7 @@ It is highly recommended to create a second **App Registration** for the deploye
 
 1. Select the **Insert** tab, then select **Office Add-ins**.
 
-1. Select **Upload My Add-in**, then select **Browse**. Upload your **manifest.xml** file. It will be in the `dist` folder.
+1. Select **Upload My Add-in**, then select **Browse**. Upload your **manifest.xml** file. It will be in the `dist/localhost` folder.
 
 1. Select the **Load Song** button on the **Home** tab to open the task pane.
 
@@ -242,7 +242,7 @@ This process follows parts of the process outlined in the Microsoft Learn docume
     1. Replace `<App Service app URL>` with the URL for your app domain.  It wil be of the form `<name>.azurewebsites.net`.
     1. Save the file.
 
-1. Build and deploy the code - follow the steps in [Build and deploy](https://learn.microsoft.com/en-us/office/dev/add-ins/publish/deploy-office-add-in-sso-to-azure?tabs=windows#build-and-deploy) except use the following command to build the code:
+1. Build and deploy the code - follow the steps in [Build and deploy](https://learn.microsoft.com/en-us/office/dev/add-ins/publish/deploy-office-add-in-sso-to-azure?tabs=windows#build-and-deploy) except use the following command to build the code (the built code will be in the `dist/azure` folder):
 
     ```Shell
     yarn build
@@ -252,7 +252,7 @@ This process follows parts of the process outlined in the Microsoft Learn docume
 
 1. Select the **Insert** tab, then select **Office Add-ins**.
 
-1. Select **Upload My Add-in**, then select **Browse**. Upload your **manifest.xml** file. It will be in the `dist` folder.
+1. Select **Upload My Add-in**, then select **Browse**. Upload your **manifest.xml** file. It will be in the `dist/azure` folder.
 
 1. Select the **Load Song** button on the **Home** tab to open the task pane.
 
