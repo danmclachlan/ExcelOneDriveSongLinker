@@ -187,6 +187,90 @@ graphRouter.get('/folderitemsurls',
 );
 // </GetFolderitemurlsSnippet>
 
+// <GetItemUrlSnippet>
+graphRouter.get('/itemurl',
+  async function(req, res) {
+    const authHeader = req.headers['authorization'];
+
+    console.debug('in function for /itemsurl');
+
+    if (authHeader) {
+      try {
+        const client = await getAuthenticatedClient(authHeader);
+
+        const itemPath = req.query['itemPath']?.toString();
+
+        console.debug(`itemPath: ${itemPath}`);
+
+        const drive: Drive = await client
+          .api('/me/drive')
+          .get();
+
+        if (drive === null) {
+          throw new Error('Could not get OneDrive root (/me/drive)');
+        }
+        //console.debug(drive);
+        
+        const basepath = '/drives/';
+        
+        const item: DriveItem = await client
+          .api(basepath.concat(drive.id || '', '/root:/', itemPath || ''))
+          .get();
+
+        if (item === null) {
+          throw new Error(`Could not get OneDrive item (${itemPath})`);
+        }
+    
+        //console.debug(item);
+
+        const id = item.id;
+        const name = item.name;
+        let value: string | undefined = undefined;
+        const resultArray: ItemUrlObject[]  = [];
+
+        if (id !== null && id !== undefined) {
+          if (item.file !== null) {  
+            if (name !== null && name !== undefined && name.endsWith('.url')) {
+              value = await ResolveShortcut(client, id);
+              if (value !== '') {
+                resultArray.push({ 'Name': name || '', 'Type': 'Shortcut', 'WebUrl': value });
+              }
+            } else {
+              value = await GetReadOnlyLink(client, id);
+              if (value !== undefined) {
+                resultArray.push({ 'Name': name || '', 'Type': 'File', 'WebUrl': value });
+              }
+            } 
+          } else if (item.folder !== undefined) {
+            // item is a folder
+            value = await GetReadOnlyLink(client, id);
+            if (value !== undefined) {
+              resultArray.push({ 'Name': name || '', 'Type': 'Folder', 'WebUrl': value });
+            }
+          }
+        }
+
+        if (resultArray.length === 0) {
+          throw new Error(`Could not resolve Url for OneDrive item ${itemPath}`);
+        }
+
+        console.debug('result: ', resultArray);
+
+        // Return the result
+        res.status(200).json(resultArray);
+
+      } catch (error) {
+        console.log(error);
+        res.status(500).json(error);
+      }
+    } else {
+      // No auth header
+      res.status(401).end();
+    }
+  }
+);
+// </GetItemUrlSnippet>
+
 // <GetFolderChildrenSnippet>
 interface ItemDescObject {
   Name: string;
@@ -230,7 +314,7 @@ graphRouter.get('/folderchildren',
           throw new Error(`Could not get OneDrive folder (${folderPath})`);
         }
     
-        // console.debug(folderItem);
+        // console.debug('folderItem: ', folderItem);
 
         const driveItemPage: graph.PageCollection = await client
           .api(basepath.concat(drive.id || '', '/items/', folderItem.id || '', '/children'))
@@ -267,9 +351,10 @@ graphRouter.get('/folderchildren',
           } else if (driveItemList[i].folder !== undefined) {
             // item is a folder
             const name = driveItemList[i].name;
+            const childCount = driveItemList[i].folder?.childCount || 0;
 
             if (name !== null && name !== undefined) {
-              resultArray.push({  'Name': name, 'Type': 'Folder', 'ChildCount': 0 });
+              resultArray.push({  'Name': name, 'Type': 'Folder', 'ChildCount': childCount });
             }
           }
         }

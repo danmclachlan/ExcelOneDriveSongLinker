@@ -1,9 +1,11 @@
 .container {
   margin: 10px;
+  background-color:white;
 }
 
 .status {
   margin: 10px;
+  background-color:white;
 }
 
 .overlay {

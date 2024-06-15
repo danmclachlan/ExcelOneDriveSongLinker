@@ -12,6 +12,46 @@ let authDialog = undefined;
 let OfficeRT = undefined;
 
 /**
+ * function to determine if an error string is really JSON
+ * @param { string } str
+ */
+function isJsonString(str) {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * function stringify a error message only if it is JSON
+ * @param { string } err
+ */
+function stringifyError(err) {
+  if (isJsonString(err)) {
+    return JSON.stringify(err);
+  } else {
+    return err;
+  }
+}
+
+// cache for access token to avoid throttling
+let ATCache = undefined;
+
+/**
+ * Check if the token is nearing expiry (adjust threshold as needed)
+ * @param { string } token
+ */
+function isTokenNearingExpiry(token) {
+  const decoded = JSON.parse(atob(token.split('.')[1]));
+  const expiry = decoded.exp;
+  const eagerFetchThreshold = Math.floor(Date.now() / 1000) + 30; // 30 seconds before expiry
+  console.debug('isTokenNearingExpiry: expiry: ', expiry, 'threshold: ', eagerFetchThreshold);
+  return eagerFetchThreshold >= expiry;
+}
+
+/**
  * Retrieves an access token for the Office Add-in's web application.
  * @param {OfficeRuntime.AuthOptions} [options] - Optional authentication options.
  * @returns {Promise<string>} - A promise that resolves with the access token.
@@ -23,7 +63,14 @@ async function getAccessToken(options) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-undef
     OfficeRT = OfficeRuntime || { auth: { getAccessToken: () => {throw new DOMException('getAccessToken: office.js not loaded', 'NotFoundError');}}};
   }
-  return await OfficeRT.auth.getAccessToken(options);
+  
+  if (ATCache === undefined || isTokenNearingExpiry(ATCache)) {
+    ATCache = await OfficeRT.auth.getAccessToken(options);
+    console.debug('getAccessToken: got new token');
+  } else {
+    console.debug('getAccessToken: using cached token');
+  }
+  return ATCache;
 }
 
 // Build a base URL from the current location
@@ -104,16 +151,21 @@ function showConsentUi() {
  * @param {boolean} isError
  */
 function showStatus(message, isError) {
-  $('.status').empty();
-  $('<div/>', {
-    class: `status-card ms-depth-4 ${isError ? 'error-msg' : 'success-msg'}`
-  }).append($('<p/>', {
-    class: 'ms-fontSize-24 ms-fontWeight-bold',
-    text: isError ? 'An error occurred' : 'Success'
-  })).append($('<p/>', {
-    class: 'ms-fontSize-16 ms-fontWeight-regular',
-    text: message
-  })).appendTo('.status');
+  try {
+    $('.status').empty();
+    $('<div/>', {
+      class: `status-card ms-depth-4 ${isError ? 'error-msg' : 'success-msg'}`
+    }).append($('<p/>', {
+      class: 'ms-fontSize-24 ms-fontWeight-bold',
+      text: isError ? 'An error occurred' : 'Success'
+    })).append($('<p/>', {
+      class: 'ms-fontSize-16 ms-fontWeight-regular',
+      text: message
+    })).appendTo('.status');
+  } catch (err) {
+    const errStr = stringifyError(err);
+    console.log(`Error: (showStatus) ${errStr}`);
+  }
 }
 
 /**
@@ -128,45 +180,61 @@ function toggleOverlay(show) {
 function showMainUi() {
   $('.container').empty();
 
-  $('<hr2/>', {
-    class: 'ms-fontSize-24 ms-fontWeight-semibold',
-    text: 'Select song to add'
-  }).appendTo('.container');
-  $('<hr2/>', {
-    class: 'ms-fontSize-12 ms-fontWeight-semibold',
-    text: ' (at ActiveCell)'
-  }).appendTo('.container');
+  $('<table/>', {
+    width: '100%',
+  }).append(
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-24 ms-fontWeight-semibold',
+        text: 'Select song to add'
+      }),
+      $('<td/>', {
+        style: 'text-align: right',
+      }).append(
+        $('<i/>', {
+          class: 'fas fa-rotate',
+          rowspan: 2,
+        }).on('click', showSecondUi)
+      )
+    ),
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-12 ms-fontWeight-semibold',
+        text: ' (at ActiveCell)'
+      })
+    )
+  ).appendTo('.container');
 
   // Create the basefolder form
   $('<form/>').on('change', getSongCategories)
     .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Base Folder'
-    })).append($('<input/>', {
+    }).append($('<input/>', {
       class: 'form-input',
       type: 'text',
       required: true,
       id: 'baseFolder'
-    })).appendTo('.container');
+    }))).appendTo('.container');
 
   // Create the Song Category input form
   $('<form/>').on('change', getSongOptions)
     .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Song Category'
-    })).append($('<select/>', {
+    }).append($('<select/>', {
       id: 'categoryFolder',
       class: 'form-input',
       type: 'text',
       required: true,
-    })).appendTo('.container');
+    }))).appendTo('.container');
   
   // Create the input form
   $('<form/>').on('submit', getSongLinks)
     .append($('<label/>', {
       class: 'ms-fontSize-16 ms-fontWeight-semibold',
       text: 'Song'
-    })).append($('<select/>', {
+    }).append($('<select/>', {
       id: 'songName',
       class: 'form-input',
       type: 'text',
@@ -176,11 +244,83 @@ function showMainUi() {
       type: 'submit',
       id: 'importButton',
       value: 'Add Song'
-    })).appendTo('.container');
+    }))).appendTo('.container');
 
   $('<hr/>').appendTo('.container');
 }
 // </MainUiSnippet>
+
+// <SecondUiSnippet>
+function showSecondUi() {
+  $('.container').empty();
+
+  $('<table/>', {
+    width: '100%'
+  }).append(
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-24 ms-fontWeight-semibold',
+        text: 'Select file to add'
+      }),
+      $('<td/>', {
+        style: 'text-align: right',
+      }).append(
+        $('<i/>', {
+          class: 'fas fa-rotate',
+          rowspan: 2,
+        }).on('click', showMainUi)
+      )
+    ),
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-12 ms-fontWeight-semibold',
+        text: ' (at ActiveCell)'
+      })
+    )
+  ).appendTo('.container');
+
+  // Create the basefolder form
+  $('<form/>').on('change', getItemLink)
+    .append($('<label/>', {
+      class: 'ms-fontSize-16 ms-fontWeight-semibold',
+      text: 'Filename (with full path)'
+    }).append($('<input/>', {
+      class: 'form-input',
+      type: 'text',
+      required: true,
+      id: 'itemPath'
+    }))).appendTo('.container');
+
+  $('<table/>').append(
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-24 ms-fontWeight-semibold',
+        text: 'Select directory listing to add'
+      }),
+    ),
+    $('<tr/>').append(
+      $('<td/>', {
+        class: 'ms-fontSize-12 ms-fontWeight-semibold',
+        text: ' (at ActiveCell)'
+      })
+    )
+  ).appendTo('.container');
+
+  // Create the basefolder form
+  $('<form/>').on('change', getFolderContents)
+    .append($('<label/>', {
+      class: 'ms-fontSize-16 ms-fontWeight-semibold',
+      text: 'Folder (with full path)'
+    }).append($('<input/>', {
+      class: 'form-input',
+      type: 'text',
+      required: true,
+      id: 'folderPath'
+    }))).appendTo('.container');  
+
+  $('<hr/>').appendTo('.container');
+}
+// </SecondUiSnippet>
 
 // <getSongCategoriesSnippet>
 /**
@@ -233,8 +373,9 @@ async function getSongCategories(evt) {
     }
     
   } catch (err) {
-    console.log(`Error: ${JSON.stringify(err)}`);
-    showStatus(`Exception populating Song Category List from OneDrive: ${JSON.stringify(err)}`, true);
+    const errStr = stringifyError(err);
+    console.log(`Error: (getSongCategories) ${errStr}`);
+    showStatus(`Exception populating Song Category List from OneDrive: ${errStr}`, true);
   }
 
   toggleOverlay(false);
@@ -295,8 +436,9 @@ async function getSongOptions(evt) {
     }
     
   } catch (err) {
-    console.log(`Error: ${JSON.stringify(err)}`);
-    showStatus(`Exception populating Song List from OneDrive: ${JSON.stringify(err)}`, true);
+    const errStr = stringifyError(err);
+    console.log(`Error: (getSongOptions) ${errStr}`);
+    showStatus(`Exception populating Song List from OneDrive: ${errStr}`, true);
   }
 
   toggleOverlay(false);
@@ -328,21 +470,61 @@ async function getSongLinks(evt) {
 
     if (response.ok) {
       const files = await response.json();
-      if (files.length > 0) WriteUrlsToSheet(files);
+      if (files.length > 0) await WriteUrlsToSheet(files);
       showStatus(`Inserted ${files.length} song file links`, false);
     } else {
       const error = await response.json();
       showStatus(`Error getting links from OneDrive: ${JSON.stringify(error)}`, true);
     }
 
-    
   } catch (err) {
-    console.log(`Error: ${JSON.stringify(err)}`);
-    showStatus(`Exception getting links from OneDrive: ${JSON.stringify(err)}`, true);
+    const errStr = stringifyError(err);
+    console.log(`Error: (getSongLinks) ${errStr}`);
+    showStatus(`Exception getting links from OneDrive: ${errStr}`, true);
   }
   toggleOverlay(false);
 }
 // <!<getSongLinksSnippet>
+
+// <getItemLinkSnippet>
+/**
+ * @param {{ preventDefault: () => void; }} evt
+ */
+async function getItemLink(evt) {
+  evt.preventDefault();
+  toggleOverlay(true);
+
+  try {
+    const apiToken = await getAccessToken({ allowSignInPrompt: true });
+ 
+    const itemPath = $('#itemPath').val();
+
+    const requestUrl =
+      `${getBaseUrl()}/graph/itemurl?itemPath=${itemPath}`;
+
+    const response = await fetch(requestUrl, {
+      headers: {
+        authorization: `Bearer ${apiToken}`
+      }
+    });
+
+    if (response.ok) {
+      const files = await response.json();
+      if (files.length > 0) await WriteUrlsToSheet(files);
+      showStatus(`Inserted ${files.length} file link`, false);
+    } else {
+      const error = await response.json();
+      showStatus(`Error getting link from OneDrive: ${JSON.stringify(error)}`, true);
+    }
+
+  } catch (err) {
+    const errStr = stringifyError(err);
+    console.log(`Error: (getItemLink) ${errStr}`);
+    showStatus(`Exception getting link from OneDrive: ${errStr}`, true);
+  }
+  toggleOverlay(false);
+}
+// </getItemLinkSnippet>
 
 // <WriteUrlsToSheetSnippet>
 /**
@@ -401,11 +583,136 @@ async function WriteUrlsToSheet(items)
       range.format.autofitColumns();
     }
   }).catch (function(err) {
-    console.log(`Error: ${JSON.stringify(err)}`);
-    showStatus(err, true);
+    const errStr = stringifyError(err);
+    console.log(`Error: (WriteUrlsToSheet) ${errStr}`);
+    showStatus(`Exception writing Urls to Sheet: ${errStr}`, true);
   });
 }
 // </WriteUrlsToSheetSnippet>
+
+// <getFolderContentsSnippet>
+/**
+ *  @param {{ preventDefault: () => void; }} evt
+ */
+async function getFolderContents(evt) {
+  evt.preventDefault();
+  toggleOverlay(true);
+
+  console.debug('getFolderContents ...');
+
+  try {
+    const apiToken = await getAccessToken({ allowSignInPrompt: true });
+    const baseFolder = $('#folderPath').val();
+    const requestUrl =
+      `${getBaseUrl()}/graph/folderchildren?baseFolder=${baseFolder}`;
+
+    const response = await fetch(requestUrl, {
+      headers: {
+        authorization: `Bearer ${apiToken}`
+      }
+    });
+
+    if (response.ok) {
+      const files = await response.json();
+      if (files.length > 0) await WriteFolderContentsToSheet(files);
+      showStatus(`Inserted ${files.length} entries`, false);
+    } else {
+      const error = await response.json();
+      showStatus(`Error getting listing from OneDrive: ${JSON.stringify(error)}`, true);
+    }
+    
+  } catch (err) {
+    const errStr = stringifyError(err);
+    console.log(`Error: (getFolderContents) ${errStr}`);
+    showStatus(`Exception populating folder contents from OneDrive: ${errStr}`, true);
+  }
+
+  toggleOverlay(false);
+}
+// </getFolderContentsSnippet>
+
+// <WriteFolderContentsToSheetSnippet>
+/**
+ * @param {any[]} items
+ */
+async function WriteFolderContentsToSheet(items) 
+{
+  console.debug(`in WriteFolderContentsToSheet: items count = ${items.length}`);
+  await Excel.run(async (context) => 
+  {
+    const cell = context.workbook.getActiveCell();
+    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    const usedRange = sheet.getUsedRangeOrNullObject();
+
+    cell.load('address');
+    cell.load('rowIndex');
+    cell.load('columnIndex');
+    usedRange.load('isNullObject');
+    usedRange.load('columnCount');
+    usedRange.load('rowCount');
+
+    await context.sync();
+
+    //console.debug('Used Range: ', usedRange);
+
+    if (!usedRange.isNullObject) {
+      // the sheet is not blank so make sure the row we are inserting
+      // into is empty starting at the ActiveCell 
+      // get the range to clear 
+      let rangeToClear = sheet.getRangeByIndexes(cell.rowIndex, cell.columnIndex, items.length + 2, 3);
+
+      //console.debug('Range to clear: ', rangeToClear);
+      rangeToClear.clear();
+      await context.sync();
+    }
+
+    //get the full address of the active cell
+    var activeCellAddress = cell.address;
+
+    // calculate the range needed to insert the folder listing
+    var range = sheet.getRange(activeCellAddress).getResizedRange(items.length, 2);
+    range.load('rowCount');
+    range.load('columnCount');
+    range.load('cellCount');
+    await context.sync();
+
+    //console.debug('Range to insert: ', range);
+    let c1 = range.getCell(0,0);
+    // @ts-ignore
+    c1.values = 'Name';
+    c1.format.font.bold = true;
+    c1.format.horizontalAlignment = 'Center';
+
+    let c2 = range.getCell(0, 1);
+    // @ts-ignore
+    c2.values = 'Type';
+    c2.format.font.bold = true;
+    c2.format.horizontalAlignment = 'Center';
+
+    let c3 = range.getCell(0, 2);
+    // @ts-ignore
+    c3.values = 'Children';
+    c3.format.font.bold = true;
+    c3.format.horizontalAlignment = 'Center';
+
+    for (var i = 0; i < items.length; i++) {
+      let cell1 = range.getCell(i+1, 0);
+      let cell2 = range.getCell(i+1, 1);
+      let cell3 = range.getCell(i+1, 2);
+      cell1.values = items[i].Name;
+      cell2.values = items[i].Type;
+      cell3.values = items[i].ChildCount;
+    }
+    range.format.autofitColumns();
+
+  }).catch (function(err) {
+    const errStr = stringifyError(err);
+    console.log(`Error: (WriteFolderContentsToSheet) ${errStr}`);
+    showStatus(`Exception writing Folder contents in Excel: ${errStr}`, true);
+  });
+}
+// </WriteFolderContentsToSheetSnippet>
+
 
 // <OfficeReadySnippet>
 Office.onReady(info => {
@@ -425,28 +732,34 @@ Office.onReady(info => {
         showConsentUi();
       }
 
-      // Call auth status API to see if we need to get consent
-      const authStatusResponse = await fetch(`${getBaseUrl()}/auth/status`, {
-        headers: {
-          authorization: `Bearer ${apiToken}`
-        }
-      });
+      try {
+        // Call auth status API to see if we need to get consent
+        const authStatusResponse = await fetch(`${getBaseUrl()}/auth/status`, {
+          headers: {
+            authorization: `Bearer ${apiToken}`
+          }
+        });
 
-      const authStatus = await authStatusResponse.json();
+        const authStatus = await authStatusResponse.json();
 
-      console.debug(`auth/status response: ${JSON.stringify(authStatus)}`);
+        console.debug(`auth/status response: ${JSON.stringify(authStatus)}`);
 
-      if (authStatus.status === 'consent_required') {
-        showConsentUi();
-      } else {
-        // report error
-        if (authStatus.status === 'error') {
-          const error = JSON.stringify(authStatus.error,
-            Object.getOwnPropertyNames(authStatus.error));
-          showStatus(`Error checking auth status: ${error}`, true);
+        if (authStatus.status === 'consent_required') {
+          showConsentUi();
         } else {
-          showMainUi();
+        // report error
+          if (authStatus.status === 'error') {
+            const error = JSON.stringify(authStatus.error,
+              Object.getOwnPropertyNames(authStatus.error));
+            showStatus(`Error checking auth status: ${error}`, true);
+          } else {
+            showMainUi();
+          }
         }
+      } catch (error) {
+        const errStr = stringifyError(error);
+        console.log(`Error: (Office.onReady) ${errStr}`);
+        showStatus(`Exception checking auth/status ${errStr}`, true);
       }
     });
   }
