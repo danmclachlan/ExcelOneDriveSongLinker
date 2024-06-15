@@ -163,6 +163,7 @@ function showStatus(message, isError) {
       text: message
     })).appendTo('.status');
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (showStatus) ${errStr}`);
   }
@@ -373,6 +374,7 @@ async function getSongCategories(evt) {
     }
     
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (getSongCategories) ${errStr}`);
     showStatus(`Exception populating Song Category List from OneDrive: ${errStr}`, true);
@@ -436,6 +438,7 @@ async function getSongOptions(evt) {
     }
     
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (getSongOptions) ${errStr}`);
     showStatus(`Exception populating Song List from OneDrive: ${errStr}`, true);
@@ -478,6 +481,7 @@ async function getSongLinks(evt) {
     }
 
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (getSongLinks) ${errStr}`);
     showStatus(`Exception getting links from OneDrive: ${errStr}`, true);
@@ -518,6 +522,7 @@ async function getItemLink(evt) {
     }
 
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (getItemLink) ${errStr}`);
     showStatus(`Exception getting link from OneDrive: ${errStr}`, true);
@@ -622,6 +627,7 @@ async function getFolderContents(evt) {
     }
     
   } catch (err) {
+    // @ts-ignore
     const errStr = stringifyError(err);
     console.log(`Error: (getFolderContents) ${errStr}`);
     showStatus(`Exception populating folder contents from OneDrive: ${errStr}`, true);
@@ -757,6 +763,7 @@ Office.onReady(info => {
           }
         }
       } catch (error) {
+        // @ts-ignore
         const errStr = stringifyError(error);
         console.log(`Error: (Office.onReady) ${errStr}`);
         showStatus(`Exception checking auth/status ${errStr}`, true);
