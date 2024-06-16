@@ -473,7 +473,7 @@ async function getSongLinks(evt) {
 
     if (response.ok) {
       const files = await response.json();
-      if (files.length > 0) await WriteUrlsToSheet(files);
+      if (files.length > 0) await WriteUrlsToSheet(files, true);
       showStatus(`Inserted ${files.length} song file links`, false);
     } else {
       const error = await response.json();
@@ -514,7 +514,7 @@ async function getItemLink(evt) {
 
     if (response.ok) {
       const files = await response.json();
-      if (files.length > 0) await WriteUrlsToSheet(files);
+      if (files.length > 0) await WriteUrlsToSheet(files, false);
       showStatus(`Inserted ${files.length} file link`, false);
     } else {
       const error = await response.json();
@@ -534,10 +534,11 @@ async function getItemLink(evt) {
 // <WriteUrlsToSheetSnippet>
 /**
  * @param {any[]} items
+ * @param {boolean} clearToEndOfLine
  */
-async function WriteUrlsToSheet(items) 
+async function WriteUrlsToSheet(items, clearToEndOfLine) 
 {
-  console.debug(`in WriteUrlsToSheet: items count = ${items.length}`);
+  console.debug(`in WriteUrlsToSheet: items count = ${items.length}, clear = ${clearToEndOfLine}`);
   await Excel.run(async (context) => 
   {
     const cell = context.workbook.getActiveCell();
@@ -554,7 +555,9 @@ async function WriteUrlsToSheet(items)
 
     //console.debug('Used Range: ', usedRange);
 
-    if (!usedRange.isNullObject) {
+    if (clearToEndOfLine && !usedRange.isNullObject) {
+      // Requested to clear from ActiveCell to end of active range in the current row
+      // AND
       // the sheet is not blank so make sure the row we are inserting
       // into is empty starting at the ActiveCell 
       // get the range to clear 
