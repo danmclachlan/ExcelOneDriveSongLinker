@@ -39,9 +39,11 @@ if (process.env.NODE_ENV !== 'production') {
   });
 
   app.use(express.static(path.join(process.cwd(), 'addin'), { etag: false }));
+  app.use(express.static(path.join(process.cwd(), 'docs'), { etag: false }));
 } else {
   // In production mode, let static files be cached.
   app.use(express.static(path.join(process.cwd(), 'addin')));
+  app.use(express.static(path.join(process.cwd(), 'docs')));
 }
 
 // Route to make available the manifest.xml file.

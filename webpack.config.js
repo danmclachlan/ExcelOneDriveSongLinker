@@ -37,6 +37,7 @@ module.exports = async (env, _options) => {
       devtool: 'source-map',
       output: {
         path: path.resolve(__dirname, deployLocation(env, 'addin')),
+        clean: true,
       },
       entry: {
         taskpane: ['./src/addin/taskpane.js', './src/addin/taskpane.html' ],
@@ -197,7 +198,8 @@ module.exports = async (env, _options) => {
       },
       output: {
         filename: '[name].js', // Output as a JavaScript file
-        path: path.resolve(__dirname, deployLocation(env, 'addin')),
+        path: path.resolve(__dirname, deployLocation(env, 'docs')),
+        clean: true,
       },
       module: {
         rules: [
